@@ -47,7 +47,7 @@ jobs:
         goarch: [amd64, arm64]
     env:
       OUTPUT_BINARY: caddydash
-      GO_VERSION: 1.24
+      GO_VERSION: 1.25
 
     steps:
       - uses: actions/checkout@v4
