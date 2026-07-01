@@ -8,7 +8,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 go build -ldflags "-s -w" -o caddydash .
+RUN VERSION=$(cat VERSION) && \
+    CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION}" -o caddydash .
 
 FROM alpine:latest AS BUILD
 
