@@ -25,29 +25,17 @@ jobs:
       - name: 输出版本号
         run: | 
           echo "Version: ${{ env.VERSION }}"
-      - name: 预先创建release
-        id: create_release
-        uses: ncipollo/release-action@v1
-        with:
-          name: ${{ env.VERSION }}
-          artifacts: ./VERSION
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.VERSION }}
-          allowUpdates: true
-          body: ${{ env.VERSION }}
-        env:
-          export PATH: $PATH:/usr/local/go/bin
 
   build:
     runs-on: ubuntu-latest
-    needs: prepare  # 确保这个作业在 prepare 作业完成后运行
+    needs: prepare
     strategy:
       matrix:
-        goos: [linux, darwin, freebsd]
+        goos: [linux, darwin] # windows excluded for now
         goarch: [amd64, arm64]
     env:
       OUTPUT_BINARY: caddydash
-      GO_VERSION: 1.25
+      GO_VERSION: 1.23
 
     steps:
       - uses: actions/checkout@v4
@@ -62,13 +50,15 @@ jobs:
           fi
           
       - name: 安装 Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+      
       - name: 编译
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
         run: |
           CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${{ env.VERSION }}" -o ${{ env.OUTPUT_BINARY }}-${{matrix.goos}}-${{matrix.goarch}} .
       - name: 打包
@@ -85,24 +75,19 @@ jobs:
           path: |
             ./${{ env.OUTPUT_BINARY }}*          
       - name: 上传至Release
-        id: create_release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v1
         with:
-          name: ${{ env.VERSION }}
-          artifacts: ./${{ env.OUTPUT_BINARY }}-${{matrix.goos}}-${{matrix.goarch}}.tar.gz
+          tag_name: ${{ env.VERSION }}
+          files: ./${{ env.OUTPUT_BINARY }}-*.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.VERSION }}
-          allowUpdates: true
-          body: ${{ env.VERSION }}
-        env:
-          export PATH: $PATH:/usr/local/go/bin
+          append_body: true
 
   docker:
     runs-on: ubuntu-latest
-    needs: build  # 确保这个作业在 build 作业完成后运行
+    needs: build
     env:
-      IMAGE_NAME: abai569/caddydash  # 定义镜像名称变量
-      DOCKERFILE: docker/Dockerfile  # 定义 Dockerfile 路径变量
+      IMAGE_NAME: abai569/caddydash
+      DOCKERFILE: docker/Dockerfile
 
     steps:
       - name: Checkout
@@ -137,5 +122,4 @@ jobs:
           push: true
           tags: | 
             ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
-            ${{ env.IMAGE_NAME }}:v0
             ${{ env.IMAGE_NAME }}:latest
