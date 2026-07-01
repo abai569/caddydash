@@ -103,13 +103,23 @@ function initSidebar() {
  * @param {string} options.pageId - 当前页面的ID, 用于导航高亮
  * @param {function} [options.pageInit=null] - 特定于该页面的额外初始化逻辑
  */
+function initVersionBadge() {
+    fetch('/v0/api/info')
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById('version-badge');
+            if (badge && data.version) {
+                badge.textContent = 'v' + data.version;
+            }
+        })
+        .catch(() => {});
+}
+
 export async function initializePage(options) {
-    // 1. 初始化国际化 (最高优先级)
     await initI18n();
 
     initUI(t);
 
-    // 2. 初始化UI模块和通用功能
     theme.init(document.getElementById('theme-toggle-input'));
     notification.init(
         document.getElementById('toast-container'), 
@@ -119,8 +129,8 @@ export async function initializePage(options) {
     activateNav(options.pageId);
     initSidebar();
     initCaddyStatus(t);
+    initVersionBadge();
 
-    // 3. 如果有特定页面的初始化逻辑, 则执行它
     if (options.pageInit && typeof options.pageInit === 'function') {
         options.pageInit();
     }

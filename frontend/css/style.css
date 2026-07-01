@@ -455,6 +455,12 @@ ul.preset-list li p {
     color: var(--text-color);
 }
 
+#version-badge {
+    font-size: 0.5rem;
+    color: #888;
+    margin-left: 2px;
+}
+
 .sidebar-nav {
     flex-grow: 1;
     /* 占据剩余空间 */
