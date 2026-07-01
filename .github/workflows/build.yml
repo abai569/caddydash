@@ -1,5 +1,8 @@
 name: Build
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -31,7 +34,7 @@ jobs:
     needs: prepare
     strategy:
       matrix:
-        goos: [linux, darwin] # windows excluded for now
+        goos: [linux]
         goarch: [amd64, arm64]
     env:
       OUTPUT_BINARY: caddydash
@@ -73,14 +76,7 @@ jobs:
         with:
           name: ${{ env.OUTPUT_BINARY }}-${{matrix.goos}}-${{matrix.goarch}}
           path: |
-            ./${{ env.OUTPUT_BINARY }}*          
-      - name: 上传至Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.VERSION }}
-          files: ./${{ env.OUTPUT_BINARY }}-*.tar.gz
-          token: ${{ secrets.GITHUB_TOKEN }}
-          append_body: true
+            ./${{ env.OUTPUT_BINARY }}*
 
   docker:
     runs-on: ubuntu-latest
