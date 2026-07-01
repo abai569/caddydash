@@ -5,6 +5,7 @@ import (
 	"caddydash/db"
 	"caddydash/gen"
 	"os"
+	"path/filepath"
 
 	"github.com/infinite-iroha/touka"
 )
@@ -55,7 +56,7 @@ func PutGlobalConfig(cdb *db.ConfigDB, cfg *config.Config) touka.HandlerFunc {
 			return
 		}
 
-		err = os.WriteFile(cfg.Server.CaddyDir+"Caddyfile", renderedContent, 0644)
+		err = os.WriteFile(filepath.Join(cfg.Server.CaddyDir, "Caddyfile"), renderedContent, 0644)
 		if err != nil {
 			c.Warnf("write Caddyfile error: %v", err)
 			c.JSON(500, touka.H{"error": err.Error()})

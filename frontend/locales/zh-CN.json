@@ -75,7 +75,12 @@
             "confirm_new_password_label": "确认新密码",
             "reset_password_btn": "重置密码",
             "resetting_password_btn": "重置中...",
-            "interface_settings_title": "界面设置"
+            "interface_settings_title": "界面设置",
+            "backup_restore_title": "备份与恢复",
+            "backup_btn": "备份",
+            "backuping_btn": "备份中...",
+            "restore_btn": "恢复",
+            "restoring_btn": "恢复中..."
         },
         "login": {
             "page_title": "登录 - CaddyDash",
@@ -181,7 +186,9 @@
         "preset_fill_title": "填充方式",
         "preset_fill_msg": "您希望如何应用这个预设？",
         "confirm_btn": "确定",
-        "cancel_btn": "取消"
+        "cancel_btn": "取消",
+        "restore_title": "确认恢复",
+        "restore_msg": "恢复会覆盖当前数据，是否继续？"
     },
     "toasts": {
         "save_success": "配置已成功保存",
@@ -209,6 +216,12 @@
         "log_connection_error": "日志连接错误，正在重试...",
         "load_site_logs_error": "加载站点日志失败",
         "log_connection_closed": "日志连接已关闭，正在尝试重新连接...",
-        "log_connection_established": "日志连接已建立"
+        "log_connection_established": "日志连接已建立",
+        "backup_started": "备份已开始，正在下载",
+        "backup_error": "备份失败: {error}",
+        "restore_success": "恢复成功，Caddy已重载",
+        "restore_error": "恢复失败: {error}",
+        "restore_invalid_file": "请选择 .zip 格式的备份文件",
+        "restore_confirm": "确定要恢复此备份吗？这将会覆盖当前数据并自动重载 Caddy。"
     }
 }

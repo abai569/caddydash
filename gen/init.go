@@ -66,7 +66,7 @@ func Add80SiteConfig(cfg *config.Config, cdb *db.ConfigDB) error {
 		Mode: "uni",
 		FileServer: CaddyUniFileServerConfig{
 			EnableFileServer: true,
-			FileDirPath:      cfg.Server.CaddyDir + "pages/demo",
+			FileDirPath:      filepath.Join(cfg.Server.CaddyDir, "pages", "demo"),
 			EnableBrowser:    false,
 		},
 		Log: CaddyUniLogConfig{
@@ -121,7 +121,7 @@ func Add80SiteConfig(cfg *config.Config, cdb *db.ConfigDB) error {
 		err = fmt.Errorf("get rendered config error: %w", err)
 		return err
 	}
-	err = os.WriteFile(cfg.Server.CaddyDir+"config.d/"+filename, renderedEntry.RenderedContent, 0644)
+	err = os.WriteFile(filepath.Join(cfg.Server.CaddyDir, "config.d", filename), renderedEntry.RenderedContent, 0644)
 	if err != nil {
 		err = fmt.Errorf("write rendered config file error: %w", err)
 		return err
@@ -172,7 +172,7 @@ func SetGlobalConfig(cfg *config.Config, cdb *db.ConfigDB) error {
 		return fmt.Errorf("save global config error: %w", err)
 	}
 
-	err = os.WriteFile(cfg.Server.CaddyDir+"Caddyfile", renderedContent, 0644)
+	err = os.WriteFile(filepath.Join(cfg.Server.CaddyDir, "Caddyfile"), renderedContent, 0644)
 	if err != nil {
 		return fmt.Errorf("write Caddyfile error: %w", err)
 	}

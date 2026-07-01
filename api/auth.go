@@ -102,7 +102,7 @@ func AuthLogin(c *touka.Context, cfg *config.Config, cdb *db.ConfigDB) {
 		c.JSON(http.StatusBadRequest, touka.H{"error": "Need username and password"})
 		return
 	}
-	c.Infof("user login: %s password: %s", username, password)
+	c.Infof("user login: %s", username)
 
 	// 验证账户密码
 	pass, err := user.CheckLogin(username, password, cdb)

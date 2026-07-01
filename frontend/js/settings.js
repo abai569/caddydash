@@ -9,6 +9,9 @@ import { createCustomSelect } from './ui.js';
 const DOMElements = {
     resetForm: document.getElementById('reset-password-form'),
     logoutBtn: document.getElementById('logout-btn'),
+    backupDownloadBtn: document.getElementById('backup-download-btn'),
+    backupRestoreBtn: document.getElementById('backup-restore-btn'),
+    backupFileInput: document.getElementById('backup-file-input'),
 };
 const resetButton = DOMElements.resetForm.querySelector('button[type="submit"]');
 
@@ -36,9 +39,17 @@ async function handleResetPassword(e) {
     resetButton.querySelector('span').textContent = t('pages.settings.resetting_password_btn');
 
     try {
-        const result = await api.post('/auth/resetpwd', new URLSearchParams(new FormData(DOMElements.resetForm)));
-        notification.toast(t('toasts.pwd_reset_success'), 'success');
-        setTimeout(() => { window.location.href = '/v0/api/auth/logout'; }, 1500);
+        const response = await fetch('/v0/api/auth/resetpwd', {
+            method: 'POST',
+            body: new URLSearchParams(new FormData(DOMElements.resetForm)),
+        });
+        const result = await response.json();
+        if (response.ok) {
+            notification.toast(t('toasts.pwd_reset_success'), 'success');
+            setTimeout(() => { window.location.href = '/v0/api/auth/logout'; }, 1500);
+        } else {
+            throw new Error(result.error || t('toasts.reset_password_error'));
+        }
     } catch (error) {
         notification.toast(`${t('common.error_prefix')}: ${error.message}`, 'error');
         resetButton.disabled = false;
@@ -50,6 +61,89 @@ async function handleLogout() {
     if (await notification.confirm(t('dialogs.logout_msg'))) {
         notification.toast(t('toasts.logout_processing'), 'info');
         setTimeout(() => { window.location.href = '/v0/api/auth/logout'; }, 500);
+    }
+}
+
+async function handleBackupDownload() {
+    const btn = DOMElements.backupDownloadBtn;
+    const origText = btn.querySelector('span').textContent;
+    btn.disabled = true;
+    btn.querySelector('span').textContent = t('pages.settings.backuping_btn');
+
+    try {
+        const response = await fetch('/v0/api/backup/download');
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: `HTTP error! status: ${response.status}` }));
+            throw new Error(errorData.error);
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const fileName = response.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || 'caddydash-backup.zip';
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        notification.toast(t('toasts.backup_started'), 'success');
+    } catch (error) {
+        notification.toast(`${t('common.error_prefix')}: ${error.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.querySelector('span').textContent = origText;
+    }
+}
+
+async function triggerBackupRestore() {
+    DOMElements.backupFileInput.value = '';
+    DOMElements.backupFileInput.click();
+}
+
+async function handleRestoreBackup() {
+    const file = DOMElements.backupFileInput.files[0];
+    if (!file) return;
+    if (!file.name.endsWith('.zip')) {
+        notification.toast(t('toasts.restore_invalid_file'), 'error');
+        return;
+    }
+
+    const confirmed = await notification.confirm(t('toasts.restore_confirm'), t('dialogs.restore_title'), {
+        confirmText: t('dialogs.confirm_btn'),
+        cancelText: t('dialogs.cancel_btn'),
+    });
+    if (!confirmed) return;
+
+    const btn = DOMElements.backupRestoreBtn;
+    const origText = btn.querySelector('span').textContent;
+    btn.disabled = true;
+    btn.querySelector('span').textContent = t('pages.settings.restoring_btn');
+
+    const formData = new FormData();
+    formData.append('backup', file);
+
+    try {
+        const response = await fetch('/v0/api/backup/restore', {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await response.json();
+        if (response.ok) {
+            notification.toast(result.message || t('toasts.restore_success'), 'success');
+            setTimeout(() => { window.location.reload(); }, 1500);
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        notification.toast(`${t('common.error_prefix')}: ${error.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.querySelector('span').textContent = origText;
+        DOMElements.backupFileInput.value = '';
     }
 }
 
@@ -71,6 +165,9 @@ function pageInit() {
 
     DOMElements.resetForm.addEventListener('submit', handleResetPassword);
     DOMElements.logoutBtn.addEventListener('click', handleLogout);
+    if (DOMElements.backupDownloadBtn) DOMElements.backupDownloadBtn.addEventListener('click', handleBackupDownload);
+    if (DOMElements.backupRestoreBtn) DOMElements.backupRestoreBtn.addEventListener('click', triggerBackupRestore);
+    if (DOMElements.backupFileInput) DOMElements.backupFileInput.addEventListener('change', handleRestoreBackup);
 }
 
 // 使用通用初始化函数

@@ -3,9 +3,13 @@ package apic
 import (
 	"caddydash/config"
 	"context"
+	"fmt"
+	"net/http"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,7 +43,7 @@ func RunCaddy(cfg *config.Config) error {
 	log.Printf("Starting Caddy in directory: %s", cfg.Server.CaddyDir)
 	cmd := exec.CommandContext(ctx, "./caddy", "run", "--config", "Caddyfile")
 	cmd.Dir = cfg.Server.CaddyDir
-	logFile, err := os.OpenFile(cfg.Server.CaddyDir+"log/"+"caddystdout.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile(filepath.Join(cfg.Server.CaddyDir, "log", "caddystdout.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		cancel()
 		log.Printf("Failed to open log file: %v", err)
@@ -52,6 +56,7 @@ func RunCaddy(cfg *config.Config) error {
 	err = cmd.Start()
 	if err != nil {
 		cancel()
+		caddyRunning.SetRunning(false)
 		log.Printf("Failed to start Caddy process: %v", err)
 		return err
 	}
@@ -76,6 +81,41 @@ func RunCaddy(cfg *config.Config) error {
 		}
 	}()
 	return nil
+}
+
+func stopCaddyProcess() error {
+	if !caddyRunning.IsRunning() {
+		return nil
+	}
+
+	resp, err := http.Post("http://localhost:2019/stop", "text/plain", strings.NewReader(""))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to stop Caddy: status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// RestartCaddyProcess stops and starts Caddy synchronously.
+func RestartCaddyProcess(cfg *config.Config) error {
+	if !caddyRunning.IsRunning() {
+		return RunCaddy(cfg)
+	}
+
+	if err := stopCaddyProcess(); err != nil {
+		return err
+	}
+
+	for caddyRunning.IsRunning() {
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return RunCaddy(cfg)
 }
 
 func StartCaddy(cfg *config.Config) touka.HandlerFunc {
@@ -111,65 +151,21 @@ func StopCaddy() touka.HandlerFunc {
 			c.JSON(200, map[string]string{"message": "Caddy is not running"})
 			return
 		}
-		client := c.GetHTTPC()
-		rb := client.NewRequestBuilder("POST", "http://localhost:2019/stop")
-		resp, err := rb.Execute()
-		if err != nil {
+		if err := stopCaddyProcess(); err != nil {
 			c.JSON(500, map[string]string{"error": err.Error()})
 			return
 		}
-		defer resp.Body.Close()
 
-		if resp.StatusCode != 200 {
-			c.JSON(resp.StatusCode, map[string]string{"error": "Failed to stop Caddy"})
-			return
-		}
-
-		caddyRunning.SetRunning(false)
 		c.JSON(200, map[string]string{"message": "Caddy stopped successfully"})
 	}
 }
 
 func RestartCaddy(cfg *config.Config) touka.HandlerFunc {
 	return func(c *touka.Context) {
-		if !caddyRunning.IsRunning() {
-			c.JSON(200, map[string]string{"message": "Caddy is not running, starting it now"})
-			go func() {
-				err := RunCaddy(cfg)
-				if err != nil {
-					c.Errorf("Failed to start Caddy: %v", err)
-
-				}
-			}()
-			return
-		}
-
-		// StopCaddy
-		client := c.GetHTTPC()
-		rb := client.NewRequestBuilder("POST", "http://localhost:2019/stop")
-		resp, err := rb.Execute()
-		if err != nil {
+		if err := RestartCaddyProcess(cfg); err != nil {
 			c.JSON(500, map[string]string{"error": err.Error()})
 			return
 		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			c.JSON(resp.StatusCode, map[string]string{"error": "Failed to stop Caddy for restart"})
-			return
-		}
-
-		// 等待caddy关闭
-		for caddyRunning.IsRunning() {
-			time.Sleep(500 * time.Millisecond) // 等待500ms
-		}
-
-		// StartCaddy
-		go func() {
-			if err := RunCaddy(cfg); err != nil {
-				c.Errorf("Failed to restart Caddy: %v", err)
-			}
-		}()
 		c.JSON(200, map[string]string{"message": "Caddy is restarting"})
 
 	}

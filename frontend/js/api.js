@@ -20,7 +20,25 @@ async function handleResponse(response) {
 
 export const api = {
     get: (endpoint) => fetch(`${API_BASE}${endpoint}`).then(handleResponse),
-    post: (endpoint, body = {}) => fetch(`${API_BASE}${endpoint}`, { method: 'POST', body: JSON.stringify(body), headers: {'Content-Type': 'application/json'} }).then(handleResponse),
+    post: (endpoint, body = {}) => {
+        let fetchBody, headers = { 'Content-Type': 'application/json' };
+        if (body instanceof FormData || body instanceof URLSearchParams || body instanceof Blob || body instanceof URL) {
+            fetchBody = body;
+            if (body instanceof FormData || body instanceof URLSearchParams) headers['Content-Type'] = null;
+            else if (body instanceof Blob) headers['Content-Type'] = null;
+        } else {
+            fetchBody = JSON.stringify(body);
+        }
+        // build options
+        const opts = { method: 'POST' };
+        if (fetchBody !== undefined) opts.body = fetchBody;
+        if (headers['Content-Type'] !== null) opts.headers = headers;
+        // if Content-Type was nulled, don't set it
+        if (fetchBody !== undefined && (body instanceof FormData || body instanceof URLSearchParams || body instanceof Blob)) {
+            // no Content-Type header needed
+        }
+        return fetch(`${API_BASE}${endpoint}`, opts).then(handleResponse);
+    },
     put: (endpoint, body) => fetch(`${API_BASE}${endpoint}`, { method: 'PUT', body: JSON.stringify(body), headers: {'Content-Type': 'application/json'} }).then(handleResponse),
     delete: (endpoint) => fetch(`${API_BASE}${endpoint}`, { method: 'DELETE' }).then(handleResponse),
 };

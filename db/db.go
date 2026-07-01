@@ -69,6 +69,8 @@ func InitDB(filepath string) (*ConfigDB, error) {
 		db.Close() // 如果连接失败，确保关闭数据库句柄
 		return nil, fmt.Errorf("db: failed to connect to database: %w", err)
 	}
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
 	err = cdb.createTables()
 	if err != nil {
 		return nil, err

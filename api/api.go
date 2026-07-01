@@ -5,11 +5,12 @@ import (
 	"caddydash/config"
 	"caddydash/db"
 	"caddydash/gen"
+	"path/filepath"
 
 	"github.com/infinite-iroha/touka"
 )
 
-func ApiGroup(v0 touka.IRouter, cdb *db.ConfigDB, cfg *config.Config, version string) {
+func ApiGroup(v0 touka.IRouter, cdb *db.ConfigDB, cfg *config.Config, cfgfile string, version string) {
 	api := v0.Group("/api")
 	api.GET("/config/filenames", func(c *touka.Context) {
 		filenames, err := cdb.GetFileNames()
@@ -49,8 +50,14 @@ func ApiGroup(v0 touka.IRouter, cdb *db.ConfigDB, cfg *config.Config, version st
 				c.JSON(200, gen.ProviderList)
 			})
 			glbr.PUT("/config", PutGlobalConfig(cdb, cfg))
-			glbr.GET("/config", GetGlobalConfig(cdb))
+		glbr.GET("/config", GetGlobalConfig(cdb))
 		}
+	}
+
+	backup := api.Group("/backup")
+	{
+		backup.GET("/download", DownloadBackup(cdb, cfg, cfgfile))
+		backup.POST("/restore", RestoreBackup(cdb, cfg, cfgfile))
 	}
 
 	// caddy实例相关
@@ -63,10 +70,10 @@ func ApiGroup(v0 touka.IRouter, cdb *db.ConfigDB, cfg *config.Config, version st
 
 		logs := caddy.Group("/logs")
 		{
-			logs.GET("/stdout", StreamLog(cfg.Server.CaddyDir+"log/caddystdout.log"))
-			logs.GET("/caddy", StreamLog(cfg.Server.CaddyDir+"log/caddy.log"))
-			logs.GET("/sites", ListSiteLogs(cfg.Server.CaddyDir+"log"))
-			logs.GET("/site/:sitename", SiteLog(cfg.Server.CaddyDir+"log"))
+			logs.GET("/stdout", StreamLog(filepath.Join(cfg.Server.CaddyDir, "log", "caddystdout.log")))
+			logs.GET("/caddy", StreamLog(filepath.Join(cfg.Server.CaddyDir, "log", "caddy.log")))
+			logs.GET("/sites", ListSiteLogs(filepath.Join(cfg.Server.CaddyDir, "log")))
+			logs.GET("/site/:sitename", SiteLog(filepath.Join(cfg.Server.CaddyDir, "log")))
 		}
 	}
 
@@ -84,7 +91,7 @@ func ApiGroup(v0 touka.IRouter, cdb *db.ConfigDB, cfg *config.Config, version st
 		})
 		auth.GET("/init", AuthInitStatus())
 		auth.POST("/init", AuthInitHandle(cdb))
-		auth.POST("resetpwd", ResetPassword(cdb))
+		auth.POST("/resetpwd", ResetPassword(cdb))
 	}
 
 	// 运行时相关

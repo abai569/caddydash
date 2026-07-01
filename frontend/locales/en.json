@@ -75,7 +75,12 @@
             "confirm_new_password_label": "Confirm New Password",
             "reset_password_btn": "Reset Password",
             "resetting_password_btn": "Resetting...",
-            "interface_settings_title": "Interface Settings"
+            "interface_settings_title": "Interface Settings",
+            "backup_restore_title": "Backup & Restore",
+            "backup_btn": "Backup",
+            "backuping_btn": "Backing up...",
+            "restore_btn": "Restore",
+            "restoring_btn": "Restoring..."
         },
         "login": {
             "page_title": "Login - CaddyDash",
@@ -181,7 +186,9 @@
         "preset_fill_title": "Fill Method",
         "preset_fill_msg": "How would you like to apply the preset?",
         "confirm_btn": "Confirm",
-        "cancel_btn": "Cancel"
+        "cancel_btn": "Cancel",
+        "restore_title": "Confirm Restore",
+        "restore_msg": "Restoring will overwrite current data. Continue?"
     },
     "toasts": {
         "save_success": "Configuration saved successfully.",
@@ -208,9 +215,16 @@
         "init_error_generic": "Initialization failed. Please try again.",
         "error_all_fields_required": "All fields are required.",
         "pwd_reset_success": "Password reset successfully. Please log in with your new password.",
+        "reset_password_error": "Failed to reset password.",
         "log_connection_error": "Log connection error, retrying...",
         "load_site_logs_error": "Failed to load site logs",
         "log_connection_closed": "Log connection closed, attempting to reconnect...",
-        "log_connection_established": "Log connection established"
+        "log_connection_established": "Log connection established",
+        "backup_started": "Backup started, downloading...",
+        "backup_error": "Backup failed: {error}",
+        "restore_success": "Restore successful, Caddy reloaded",
+        "restore_error": "Restore failed: {error}",
+        "restore_invalid_file": "Please select a .zip backup file",
+        "restore_confirm": "Restore this backup? This will overwrite current data and automatically reload Caddy."
     }
 }

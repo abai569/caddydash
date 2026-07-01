@@ -86,6 +86,20 @@
                         </div>
                     </form>
                 </section>
+                <section class="card-panel">
+                    <h3 data-i18n="pages.settings.backup_restore_title">备份与恢复</h3>
+                    <div class="settings-backup-actions">
+                        <button type="button" id="backup-download-btn" class="btn btn-primary">
+                            <i class="fa-solid fa-download"></i>
+                            <span data-i18n="pages.settings.backup_btn">备份</span>
+                        </button>
+                        <button type="button" id="backup-restore-btn" class="btn btn-warning">
+                            <i class="fa-solid fa-upload"></i>
+                            <span data-i18n="pages.settings.restore_btn">恢复</span>
+                        </button>
+                        <input type="file" id="backup-file-input" accept=".zip" style="display:none;">
+                    </div>
+                </section>
             </div>
             <footer class="footer">
                 <p>&copy; 2025 WJQSERVER. All Rights Reserved.</p>

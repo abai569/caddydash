@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/fenthope/compress"
@@ -37,7 +38,7 @@ func init() {
 	parseFlags()
 	loadConfig()
 	loadDatabase(cfg.DB.Filepath)
-	loadtmpltoDB(cfg.Server.CaddyDir+"tmpl", cdb)
+	loadtmpltoDB(filepath.Join(cfg.Server.CaddyDir, "tmpl"), cdb)
 	loadAdminStatus(cdb)
 	initSessionKey()
 }
@@ -126,7 +127,7 @@ func main() {
 	logger, err := reco.New(reco.Config{
 		Level:          logLevel,
 		Mode:           reco.ModeText,
-		FilePath:       cfg.Server.CaddyDir + "log/caddydash.log",
+		FilePath:       filepath.Join(cfg.Server.CaddyDir, "log", "caddydash.log"),
 		MaxFileSizeMB:  5,
 		EnableRotation: true,
 		Async:          true,
@@ -184,7 +185,7 @@ func main() {
 	}
 
 	v0 := r.Group("/v0")
-	api.ApiGroup(v0, cdb, cfg, version)
+	api.ApiGroup(v0, cdb, cfg, cfgfile, version)
 
 	gob.Register(map[string]interface{}{})
 	gob.Register(time.Time{})

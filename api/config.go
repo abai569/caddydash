@@ -6,6 +6,7 @@ import (
 	"caddydash/gen"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/infinite-iroha/touka"
 )
@@ -93,7 +94,7 @@ func WriteConfig(cdb *db.ConfigDB, paramsEntry db.ParamsEntry, cfg *config.Confi
 		err = fmt.Errorf("get rendered config error: %w", err)
 		return err
 	}
-	err = os.WriteFile(cfg.Server.CaddyDir+"config.d/"+filename, renderedEntry.RenderedContent, 0644)
+	err = os.WriteFile(filepath.Join(cfg.Server.CaddyDir, "config.d", filename), renderedEntry.RenderedContent, 0644)
 	if err != nil {
 		err = fmt.Errorf("write rendered config file error: %w", err)
 		return err
@@ -110,7 +111,7 @@ func DeleteConfig(cdb *db.ConfigDB, cfg *config.Config) touka.HandlerFunc {
 			return
 		}
 		// 删除文件
-		err = os.Remove(cfg.Server.CaddyDir + "config.d/" + filename)
+		err = os.Remove(filepath.Join(cfg.Server.CaddyDir, "config.d", filename))
 		if err != nil {
 			c.Warnf("delete rendered config file error: %v", err)
 		}
